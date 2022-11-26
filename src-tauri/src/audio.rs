@@ -1,61 +1,29 @@
-#![allow(unused_imports)]
+// #![allow(unused_imports)]
 #![allow(dead_code)]
 #![allow(unused_variables)]
 #![allow(unused_mut)]
-// use core::time;
-use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
-use cpal::{Data, Sample, SampleFormat};
 use std::f32::consts::PI;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Arc, Mutex};
 use std::{thread, time};
+use cpal::traits::{DeviceTrait, HostTrait, StreamTrait};
+use cpal::Sample;
 
-struct Sine {
-    amp: f32,
-    hz: f32,
-    phase: f32, // in radians
-}
+use crate::signals::sine::*;
+use crate::signals::{Signal, Signals};
 
-impl Sine {
-    fn default() -> Self {
-        Self {
-            amp: 1.0,
-            hz: 440.0,
-            phase: 0.0,
-        }
-    }
-}
+const TWOPI: f32 = PI;
 
-struct ComplexSine {
-    sines: Vec<Sine>,
-}
-
-impl ComplexSine {
-    fn new() -> Self {
-        Self { sines: vec![] }
-    }
-
-    fn add(&mut self, sine: Sine) {
-        self.sines.push(sine);
-    }
-
-    fn sample(&self, rads: f32) -> f32 {
-        let mut cur_amp = 0.0;
-        for sine in &self.sines {
-            cur_amp += sine.amp * (PI * sine.hz * rads + sine.phase).sin();
-        }
-        cur_amp /= self.sines.len() as f32;
-        cur_amp
-    }
-}
-fn play2() {
+fn play() {
+    // Init cpal
     let (dev, cfg) = supported_cfgs();
-    let mut cs = ComplexSine::new();
-    cs.add(Sine::default());
-    cs.add(Sine {
-        hz: 300.0,
-        ..Sine::default()
-    });
+    let sample_rate: f32 = cfg.sample_rate.0 as f32;
+
+    // Create signal with continuous and periodic sine wave components
+    let mut sigs = Signals::new();
+    sigs.add_signal(Sine::new(0.5, 440.0, 0.0));
+    // sines.add_sine(Sine::new(1.0, 554.37, 0.0));
+    // sines.add_sine(Sine::new(1.0, 587.33, 0.0));
+    // sines.add_sine(Sine::new(1.0, 659.25, 0.0));
+
     let mut count: f32 = 0.0;
     let stream = dev
         .build_output_stream(
@@ -63,11 +31,9 @@ fn play2() {
             move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
                 for sample in data.iter_mut() {
                     count += 1.0;
-                    let rads = count / cfg.sample_rate.0 as f32;
-                    let amp = cs.sample(rads);
-                    cs.sines[0].hz += 1.0;
-                    *sample = Sample::from(&amp);
-                    // println!("count={:?}, amplitude={:?}", count, amp);
+                    let rads = count / sample_rate * PI;
+                    *sample = Sample::from(&sigs.sample_rads(rads));
+                    // println!("rads={:?}\t amp={:?}", rads, sig.sample_rads(rads));
                 }
             },
             move |err| {
@@ -76,35 +42,7 @@ fn play2() {
         )
         .unwrap();
     stream.play().unwrap();
-    thread::sleep(time::Duration::from_millis(2000));
-    stream.pause().unwrap();
-}
-
-fn play() {
-    let (dev, cfg) = supported_cfgs();
-    let f1: f32 = 400.0; // frequency 1
-                         // let f2: f32 = 300.0;
-    let sample_rate: f32 = cfg.sample_rate.0 as f32;
-    let q1 = sample_rate / (f1 * PI);
-    let mut count: u32 = 0;
-    let stream = dev
-        .build_output_stream(
-            &cfg,
-            move |data: &mut [f32], _: &cpal::OutputCallbackInfo| {
-                for sample in data.iter_mut() {
-                    count += 1;
-                    let amp: f32 = (count as f32 / q1).sin();
-                    *sample = Sample::from(&amp);
-                    println!("count={:?}, amplitude={:?}", count, amp);
-                }
-            },
-            move |err| {
-                eprintln!("an error occurred on the output audio stream: {}", err);
-            },
-        )
-        .unwrap();
-    stream.play().unwrap();
-    thread::sleep(time::Duration::from_millis(500));
+    thread::sleep(time::Duration::from_millis(4000));
     stream.pause().unwrap();
 }
 
@@ -115,11 +53,6 @@ mod tests {
     #[test]
     fn it_plays() {
         play();
-    }
-
-    #[test]
-    fn it_plays2() {
-        play2();
     }
 }
 
