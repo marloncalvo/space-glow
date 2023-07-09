@@ -1,6 +1,6 @@
 [package]
 name = "space-glow"
-version = "0.0.2"
+version = "0.0.3"
 description = "Space Glow"
 authors = ["you"]
 license = ""
@@ -11,9 +11,17 @@ rust-version = "1.57"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cpal = "0.15.2"
-winit = "0.28"
+# winit = "0.28"
 env_logger = "0.10"
 log = "0.4"
-wgpu = "0.16"
-tokio = { version = "1.29.1", features = ["full"]}
+# wgpu = "0.16"
+tokio = { version = "1.29.1", features = ["full"] }
+sg_graphics = { path = "./sg_graphics" }
+sg_gui = { path = "./sg_gui" }
+sg_audio = { path = "./sg_audio" }
+
+[workspace]
+members = [
+    "sg_graphics",
+    "sg_gui",
+]

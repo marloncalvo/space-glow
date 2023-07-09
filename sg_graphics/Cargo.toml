@@ -1,0 +1,11 @@
+[package]
+name = "sg_graphics"
+version = "0.0.1"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+winit = "0.28"
+wgpu = "0.16"
+tokio = { version = "1.29.1", features = ["full"] }
