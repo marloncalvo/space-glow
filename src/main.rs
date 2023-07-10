@@ -24,6 +24,7 @@ fn main() {
     trace!("Logger initialized.");
 
     // TODO: Need better threading so GUI and Audio don't block each other.
+    // gui.run() must be kept on main thread to avoid platform-specific issues.
     tokio::runtime::Builder::new_multi_thread()
         .enable_all()
         .build()
