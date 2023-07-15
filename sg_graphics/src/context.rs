@@ -1,4 +1,7 @@
-use winit::window::Window;
+use winit::{
+    event::{Event, WindowEvent},
+    window::Window,
+};
 
 pub struct Context {
     pub window: Window,
@@ -45,6 +48,11 @@ impl Context {
             .await
             .unwrap();
 
+        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            label: None,
+            source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!("shader.wgsl")))
+        });
+
         let surface_caps = surface.get_capabilities(&adapter);
 
         // Assumes sRGB surface.
@@ -73,5 +81,23 @@ impl Context {
             config,
             size,
         }
+    }
+
+    fn resize(&mut self, new_size: winit::dpi::PhysicalSize<u32>)
+    {
+        todo!()
+    }
+
+    pub fn input(&mut self, event: &WindowEvent) -> bool {
+        false
+    }
+
+    pub fn update(&mut self)
+    {
+        todo!()
+    }
+
+    pub fn render_square(&mut self, height: int) {
+
     }
 }
